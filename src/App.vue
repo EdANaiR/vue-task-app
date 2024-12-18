@@ -91,9 +91,9 @@ export default {
     return {
       drawer: true,
       items: [
-        { title: "Günlük", icon: "mdi-view-day", to: "/" },
-        { title: "Aylık", icon: "mdi-calendar-month", to: "/monthly" },
-        { title: "Yıllık", icon: "mdi-calendar", to: "/yearly" },
+        { title: "Daily", icon: "mdi-view-day", to: "/" },
+        { title: "Monthly", icon: "mdi-calendar-month", to: "/monthly" },
+        { title: "Yearly", icon: "mdi-calendar", to: "/yearly" },
       ],
       currentDateTime: "",
       selectedDate: new Date().toISOString().split("T")[0],
@@ -110,7 +110,7 @@ export default {
         hour: "2-digit",
         minute: "2-digit",
       };
-      this.currentDateTime = now.toLocaleDateString("tr-TR", options);
+      this.currentDateTime = now.toLocaleDateString("en-US", options);
     },
     changeDate(days) {
       const date = new Date(this.selectedDate);
@@ -126,7 +126,7 @@ export default {
         month: "long",
         day: "numeric",
       };
-      return new Date(this.selectedDate).toLocaleDateString("tr-TR", options);
+      return new Date(this.selectedDate).toLocaleDateString("en-US", options);
     },
   },
   mounted() {

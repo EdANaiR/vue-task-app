@@ -2,7 +2,7 @@
   <div class="reading-tracker">
     <v-card class="tracker-card pa-6" elevation="3">
       <h3 class="text-h6 font-weight-bold mb-4 text-black d-flex align-center">
-        <v-icon left color="orange">mdi-book-open-page-variant </v-icon>
+        <v-icon left color="orange">mdi-book-open-page-variant</v-icon>
         Daily Reading
       </h3>
 
@@ -60,9 +60,12 @@
       <v-divider class="my-1"></v-divider>
 
       <v-slide-y-transition group>
-        <div v-if="readings.length > 0" class="readings-container">
+        <div
+          v-if="readingsForSelectedDate.length > 0"
+          class="readings-container"
+        >
           <v-card
-            v-for="(reading, index) in readings"
+            v-for="(reading, index) in readingsForSelectedDate"
             :key="index"
             class="reading-item mb-3 pa-3"
             outlined
@@ -73,7 +76,7 @@
                   {{ reading.bookName }}
                 </div>
                 <div class="pages-read grey--text text--darken-1">
-                  {{ reading.pagesRead }} sayfa okundu
+                  {{ reading.pagesRead }} page read
                 </div>
               </div>
               <v-btn
@@ -93,34 +96,83 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ReadingTracker",
-  data() {
-    return {
-      bookName: "",
-      pagesRead: "",
-      readings: [],
-      isAdding: false,
-    };
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+
+const props = defineProps({
+  selectedDate: {
+    type: String,
+    required: true,
   },
-  methods: {
-    saveReading() {
-      if (this.bookName && this.pagesRead) {
-        this.readings.unshift({
-          bookName: this.bookName,
-          pagesRead: this.pagesRead,
-        });
-        this.bookName = "";
-        this.pagesRead = "";
-        this.isAdding = false;
-      }
-    },
-    removeReading(index) {
-      this.readings.splice(index, 1);
-    },
-  },
+});
+
+const bookName = ref("");
+const pagesRead = ref("");
+const readings = ref({});
+const isAdding = ref(false);
+
+// Seçili tarihe göre okuma kayıtlarını getir
+const readingsForSelectedDate = computed(() => {
+  return readings.value[props.selectedDate] || [];
+});
+
+// Local storage'dan verileri yükle
+const loadReadingsFromLocalStorage = () => {
+  const savedReadings = localStorage.getItem("readings");
+  if (savedReadings) {
+    readings.value = JSON.parse(savedReadings);
+  }
 };
+
+// Local storage'a verileri kaydet
+const saveToLocalStorage = () => {
+  localStorage.setItem("readings", JSON.stringify(readings.value));
+};
+
+// Yeni okuma kaydı ekler
+const saveReading = () => {
+  if (bookName.value && pagesRead.value) {
+    if (!readings.value[props.selectedDate]) {
+      readings.value[props.selectedDate] = [];
+    }
+
+    readings.value[props.selectedDate].unshift({
+      bookName: bookName.value,
+      pagesRead: pagesRead.value,
+      date: new Date().toISOString(),
+    });
+
+    // Local storage'a kaydet
+    saveToLocalStorage();
+
+    // Formu temizler
+    bookName.value = "";
+    pagesRead.value = "";
+    isAdding.value = false;
+  }
+};
+
+// Okuma kaydını sil
+const removeReading = (index) => {
+  readings.value[props.selectedDate].splice(index, 1);
+  saveToLocalStorage();
+};
+
+// Bileşen yüklendiğinde verileri yükle
+onMounted(() => {
+  loadReadingsFromLocalStorage();
+});
+
+// Tarih değiştiğinde yeni tarihe ait kayıtları hazırla
+watch(
+  () => props.selectedDate,
+  (newDate) => {
+    if (!readings.value[newDate]) {
+      readings.value[newDate] = [];
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

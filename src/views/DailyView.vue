@@ -7,11 +7,17 @@
           :selectedDate="selectedDate"
           class="task-manager-component"
         />
-        <TaskNote class="task-note-component" />
+        <TaskNote :selectedDate="selectedDate" class="task-note-component" />
       </div>
       <div class="center-column">
-        <ReadingTracker class="reading-tracker-component" />
-        <PrayerTracker class="prayer-tracker-component" />
+        <ReadingTracker
+          :selectedDate="selectedDate"
+          class="reading-tracker-component"
+        />
+        <PrayerTracker
+          :selectedDate="selectedDate"
+          class="prayer-tracker-component"
+        />
       </div>
       <div class="right-column">
         <CustomCalendar />

@@ -33,12 +33,12 @@ export default {
     return {
       currentDate: new Date(),
       selectedDate: null,
-      daysOfWeek: ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"],
+      daysOfWeek: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     };
   },
   computed: {
     currentMonthName() {
-      return this.currentDate.toLocaleString("tr-TR", { month: "long" });
+      return this.currentDate.toLocaleString("en-US", { month: "long" });
     },
     currentYear() {
       return this.currentDate.getFullYear();
@@ -56,9 +56,13 @@ export default {
         0
       );
 
-      for (let i = firstDayOfMonth.getDay() - 1; i >= 0; i--) {
+      let firstDayIndex = firstDayOfMonth.getDay();
+
+      firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
         const date = new Date(firstDayOfMonth);
-        date.setDate(date.getDate() - i);
+        date.setDate(date.getDate() - i - 1);
         dates.push({ date, day: date.getDate(), currentMonth: false });
       }
 
@@ -123,7 +127,7 @@ export default {
   border-radius: 16px;
   padding: 24px;
   font-family: Arial, sans-serif;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.171);
   border: 1px solid rgba(142, 36, 170, 0.2);
 }
 
@@ -158,7 +162,7 @@ export default {
 .calendar-header h2 {
   margin: 0;
   font-size: 20px;
-  color: white;
+  color: #f3efef;
   font-weight: 600;
 }
 
@@ -181,19 +185,19 @@ export default {
 }
 
 .day-name {
-  font-weight: 690;
+  font-weight: 600;
   color: #8e24aa;
   cursor: default;
   font-size: 13px;
 }
 
 .current-month {
-  color: #0c0c0c;
-  font-weight: 570;
+  color: #050505;
+  font-weight: 560;
 }
 
 .calendar-day:not(.current-month) {
-  color: #f0eded;
+  color: #ccc;
 }
 
 .calendar-day:hover:not(.day-name):not(.selected) {

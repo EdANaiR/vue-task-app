@@ -7,7 +7,7 @@
           <h3 class="text-h6 font-weight-bold mb-0">Daily Prayers</h3>
         </div>
         <div class="progress-text mt-2">
-          {{ completedCount }}/{{ prayers.length }} completed
+          {{ completedCount }}/{{ prayersForSelectedDate.length }} completed
         </div>
       </div>
 
@@ -15,53 +15,42 @@
 
       <v-list class="prayer-list pa-2">
         <v-list-item
-          v-for="prayer in prayers"
+          v-for="prayer in prayersForSelectedDate"
           :key="prayer.name"
           :class="{ 'prayer-completed': prayer.completed }"
           class="prayer-item mb-2 rounded-lg"
         >
-          <template v-slot:default>
-            <v-list-item-content>
-              <div class="d-flex justify-space-between align-center">
-                <div>
-                  <v-list-item-title class="font-weight-medium mb-1">
-                    {{ prayer.name }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="text-caption">
-                    {{ prayer.time }}
-                  </v-list-item-subtitle>
-                </div>
-                <div class="d-flex align-center">
-                  <v-checkbox
-                    v-model="prayer.completed"
-                    :color="prayer.completed ? 'primary' : 'grey'"
-                    @change="updatePrayerStatus(prayer)"
-                    class="ma-0 pa-0"
-                    hide-details
-                  >
-                    <template v-slot:default="{ isChecked }">
-                      <div
-                        class="custom-checkbox"
-                        :class="{ checked: isChecked }"
-                      >
-                        <v-icon v-if="isChecked" color="white" size="small">
-                          mdi-check
-                        </v-icon>
-                      </div>
-                    </template>
-                  </v-checkbox>
-                  <v-fade-transition>
-                    <span
-                      v-if="prayer.completed"
-                      class="success-text ml-2 text-caption"
-                    >
-                      Completed
-                    </span>
-                  </v-fade-transition>
-                </div>
-              </div>
-            </v-list-item-content>
-          </template>
+          <div class="d-flex justify-space-between align-center w-100">
+            <div>
+              <div class="font-weight-medium mb-1">{{ prayer.name }}</div>
+              <div class="text-caption">{{ prayer.time }}</div>
+            </div>
+            <div class="d-flex align-center">
+              <v-checkbox
+                v-model="prayer.completed"
+                :color="prayer.completed ? 'primary' : 'grey'"
+                @change="() => updatePrayerStatus(prayer)"
+                class="ma-0 pa-0"
+                hide-details
+              >
+                <template v-slot:default="{ isChecked }">
+                  <div class="custom-checkbox" :class="{ checked: isChecked }">
+                    <v-icon v-if="isChecked" color="white" size="small">
+                      mdi-check
+                    </v-icon>
+                  </div>
+                </template>
+              </v-checkbox>
+              <v-fade-transition>
+                <span
+                  v-if="prayer.completed"
+                  class="success-text ml-2 text-caption"
+                >
+                  Completed
+                </span>
+              </v-fade-transition>
+            </div>
+          </div>
         </v-list-item>
       </v-list>
     </v-card>
@@ -69,32 +58,93 @@
 </template>
 
 <script>
+import { ref, watch, onMounted, computed } from "vue";
+
 export default {
   name: "PrayerTracker",
-  data() {
-    return {
-      prayers: [
-        { name: "Dawn", time: "06:27", completed: false },
-        { name: "Noon", time: "12:52", completed: false },
-        { name: "Afternoon", time: "15:13", completed: false },
-        { name: "Evening", time: "17:32", completed: false },
-        { name: "Night", time: "18:57", completed: false },
-      ],
+  props: {
+    selectedDate: {
+      type: String,
+      required: true,
+    },
+  },
+  setup(props) {
+    const STORAGE_KEY = "prayer-tracker-data";
+
+    const defaultPrayers = [
+      { name: "Dawn", time: "06:27", completed: false },
+      { name: "Noon", time: "12:52", completed: false },
+      { name: "Afternoon", time: "15:13", completed: false },
+      { name: "Evening", time: "17:32", completed: false },
+      { name: "Night", time: "18:57", completed: false },
+    ];
+
+    const prayers = ref({});
+
+    const loadPrayersFromLocalStorage = () => {
+      try {
+        const savedPrayers = localStorage.getItem(STORAGE_KEY);
+        if (savedPrayers) {
+          prayers.value = JSON.parse(savedPrayers);
+        }
+      } catch (error) {
+        console.error("Error loading prayers:", error);
+      }
     };
-  },
-  computed: {
-    completedCount() {
-      return this.prayers.filter((prayer) => prayer.completed).length;
-    },
-  },
-  methods: {
-    updatePrayerStatus(prayer) {
-      console.log(
-        `${prayer.name} prayer ${
-          prayer.completed ? "completed" : "not completed"
-        }`
+
+    const savePrayersToLocalStorage = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(prayers.value));
+      } catch (error) {
+        console.error("Error saving prayers:", error);
+      }
+    };
+
+    const prayersForSelectedDate = computed(() => {
+      if (!prayers.value[props.selectedDate]) {
+        prayers.value[props.selectedDate] = JSON.parse(
+          JSON.stringify(defaultPrayers)
+        );
+        savePrayersToLocalStorage();
+      }
+      return prayers.value[props.selectedDate];
+    });
+
+    const completedCount = computed(() => {
+      return prayersForSelectedDate.value.filter((prayer) => prayer.completed)
+        .length;
+    });
+
+    const updatePrayerStatus = (prayer) => {
+      const prayerIndex = prayersForSelectedDate.value.findIndex(
+        (p) => p.name === prayer.name
       );
-    },
+
+      if (prayerIndex !== -1) {
+        prayersForSelectedDate.value[prayerIndex] = { ...prayer };
+        savePrayersToLocalStorage();
+      }
+    };
+
+    onMounted(() => {
+      loadPrayersFromLocalStorage();
+    });
+
+    watch(
+      () => props.selectedDate,
+      (newDate) => {
+        if (!prayers.value[newDate]) {
+          prayers.value[newDate] = JSON.parse(JSON.stringify(defaultPrayers));
+          savePrayersToLocalStorage();
+        }
+      }
+    );
+
+    return {
+      prayersForSelectedDate,
+      completedCount,
+      updatePrayerStatus,
+    };
   },
 };
 </script>
@@ -160,16 +210,7 @@ export default {
   font-weight: 500;
 }
 
-:deep(.v-list-item__content) {
+:deep(.v-list-item) {
   padding: 8px 0;
-}
-
-:deep(.v-list-item-title) {
-  font-size: 1rem;
-  color: rgba(0, 0, 0, 0.87);
-}
-
-:deep(.v-list-item-subtitle) {
-  color: rgba(0, 0, 0, 0.6);
 }
 </style>
